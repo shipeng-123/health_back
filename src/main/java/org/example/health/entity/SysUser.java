@@ -14,4 +14,5 @@ public class SysUser {
     private Integer gender;
     private String avatarUrl;
     private String email;
+    private java.math.BigDecimal weight;
 }

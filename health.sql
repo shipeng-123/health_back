@@ -22,3 +22,21 @@ CREATE TABLE `sys_user` (
                             UNIQUE KEY `uk_phone` (`phone`),
                             KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+ALTER TABLE sys_user
+    ADD COLUMN weight DECIMAL(5,2) DEFAULT NULL COMMENT '体重(kg)';
+CREATE TABLE sport_record (
+                              id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+                              user_id BIGINT NOT NULL COMMENT '用户ID',
+                              sport_type VARCHAR(50) NOT NULL COMMENT '运动类型',
+                              duration_min INT NOT NULL COMMENT '运动时长(分钟)',
+                              distance_km DECIMAL(6,2) DEFAULT NULL COMMENT '距离(km)',
+                              met_value DECIMAL(5,2) NOT NULL COMMENT 'MET值',
+                              calories DECIMAL(8,2) NOT NULL COMMENT '消耗热量(kcal)',
+                              record_date DATE NOT NULL COMMENT '记录日期',
+                              remark VARCHAR(255) DEFAULT NULL COMMENT '备注',
+                              create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                              update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                              PRIMARY KEY (id),
+                              KEY idx_user_date (user_id, record_date)
+) COMMENT='运动记录表';
