@@ -1,5 +1,9 @@
 package org.example.health.util;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -67,5 +71,18 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         Date exp = claims.getExpiration();
         return exp != null && exp.before(new Date());
+    }
+    public static Long getUserIdFromHeader(String authorization) {
+        if (authorization == null || authorization.isBlank()) return null;
+
+        String token = authorization.startsWith("Bearer ")
+                ? authorization.substring(7).trim()
+                : authorization.trim();
+
+        try {
+            return parseUserId(token);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

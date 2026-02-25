@@ -6,4 +6,5 @@ import org.example.health.entity.SysUser;
 
 @Mapper
 public interface SysUserMapper extends BaseMapper<SysUser> {
+
 }
