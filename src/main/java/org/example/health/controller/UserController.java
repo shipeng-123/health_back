@@ -32,8 +32,9 @@ public class UserController {
      * 获取个人资料（根据 token）
      */
     @GetMapping("/profile")
-    public ApiResult<ProfileResp> getProfile(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        System.out.println("Authorization header = [" + authorization + "]");
+    public ApiResult<ProfileResp> getProfile(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+
         Long userId = getUserIdFromAuthHeader(authorization);
         if (userId == null) {
             return ApiResult.fail("未登录或token无效");
@@ -52,6 +53,14 @@ public class UserController {
         resp.setGender(user.getGender());
         resp.setAvatarUrl(user.getAvatarUrl());
         resp.setEmail(user.getEmail());
+
+        // ✅ 身体资料回显
+        resp.setHeightCm(user.getHeightCm());
+        resp.setWeight(user.getWeight());
+        resp.setGoalWeightKg(user.getGoalWeightKg());
+        resp.setActivityLevel(user.getActivityLevel());
+        resp.setTargetType(user.getTargetType());
+        resp.setBirthDate(user.getBirthDate());
 
         return ApiResult.success(resp);
     }
@@ -85,13 +94,36 @@ public class UserController {
             return ApiResult.fail("手机号已被其他用户使用");
         }
 
+        // 基础资料
         currentUser.setPhone(req.getPhone());
         currentUser.setNickname(req.getNickname());
         currentUser.setGender(req.getGender() == null ? 0 : req.getGender());
         currentUser.setEmail(req.getEmail());
+        currentUser.setAvatarUrl(req.getAvatarUrl()); // 可为空
 
-        // avatarUrl 可以为空（前端默认头像兜底）
-        currentUser.setAvatarUrl(req.getAvatarUrl());
+        // ✅ 身体资料（都允许为空：用户可以分步完善）
+        // 但如果你想强校验范围，也可以在这里做
+        if (req.getHeightCm() != null) {
+            currentUser.setHeightCm(req.getHeightCm());
+        } else {
+            currentUser.setHeightCm(null);
+        }
+
+        if (req.getWeight() != null) {
+            currentUser.setWeight(req.getWeight());
+        } else {
+            currentUser.setWeight(null);
+        }
+
+        if (req.getGoalWeightKg() != null) {
+            currentUser.setGoalWeightKg(req.getGoalWeightKg());
+        } else {
+            currentUser.setGoalWeightKg(null);
+        }
+
+        currentUser.setBirthDate(req.getBirthDate());
+        currentUser.setActivityLevel(req.getActivityLevel());
+        currentUser.setTargetType(req.getTargetType());
 
         int rows = sysUserMapper.updateById(currentUser);
         if (rows <= 0) {
@@ -129,14 +161,13 @@ public class UserController {
             return ApiResult.fail("图片大小不能超过2MB");
         }
 
-        // 上传目录：项目运行目录/uploads/avatar
-        String uploadDirPath = System.getProperty("user.dir") + File.separator + "uploads" + File.separator + "avatar";
+        String uploadDirPath = System.getProperty("user.dir")
+                + File.separator + "uploads" + File.separator + "avatar";
         File uploadDir = new File(uploadDirPath);
         if (!uploadDir.exists() && !uploadDir.mkdirs()) {
             return ApiResult.fail("创建上传目录失败");
         }
 
-        // 生成文件名
         String originalFilename = file.getOriginalFilename();
         String ext = getFileExt(originalFilename);
         if (!StringUtils.hasText(ext)) {
@@ -144,7 +175,8 @@ public class UserController {
         }
 
         String timePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String fileName = "u" + userId + "_" + timePart + "_" + UUID.randomUUID().toString().replace("-", "") + ext;
+        String fileName = "u" + userId + "_" + timePart + "_"
+                + UUID.randomUUID().toString().replace("-", "") + ext;
 
         File dest = new File(uploadDir, fileName);
         try {
@@ -153,7 +185,6 @@ public class UserController {
             return ApiResult.fail("上传失败：" + e.getMessage());
         }
 
-        // 返回给前端访问路径（后面需要在 Spring Boot 配置静态映射）
         String avatarUrl = "/uploads/avatar/" + fileName;
         return ApiResult.success(avatarUrl);
     }
@@ -167,33 +198,19 @@ public class UserController {
         return filename.substring(idx).toLowerCase();
     }
 
-    /**
-     * 从 Authorization: Bearer xxx 里解析 userId
-     * 前提：JwtUtil里有 parseUserId(token) 方法（下面我会给你）
-     */
     private Long getUserIdFromAuthHeader(String authorization) {
         if (authorization == null || authorization.isBlank()) {
-            System.out.println("authorization is null/blank");
             return null;
         }
 
         String token = authorization.trim();
-        System.out.println("raw authorization = [" + token + "]");
-
         if (token.startsWith("Bearer ")) {
             token = token.substring(7).trim();
         }
 
-        System.out.println("token before parse = [" + token + "]");
-        System.out.println("token dot count = " + token.chars().filter(ch -> ch == '.').count());
-
         try {
-            Long userId = JwtUtil.parseUserId(token);
-            System.out.println("parsed userId = " + userId);
-            return userId;
+            return JwtUtil.parseUserId(token);
         } catch (Exception e) {
-            System.out.println("JWT parse error:");
-            e.printStackTrace();
             return null;
         }
     }

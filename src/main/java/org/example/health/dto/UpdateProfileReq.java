@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 @Data
 public class UpdateProfileReq {
 
@@ -23,6 +26,14 @@ public class UpdateProfileReq {
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    // 头像地址（前端先传 base64 或 URL 都行；后面建议只传上传接口返回的 URL）
+    // 头像地址
     private String avatarUrl;
+
+    // ✅ 身体资料（都允许为空：注册后可慢慢补齐）
+    private BigDecimal heightCm;       // cm
+    private BigDecimal weight;         // kg（对应 sys_user.weight）
+    private BigDecimal goalWeightKg;   // kg
+    private Integer activityLevel;     // 1低 2中 3高
+    private Integer targetType;        // 1减脂 2增肌 3维持
+    private LocalDate birthDate;       // yyyy-MM-dd
 }
