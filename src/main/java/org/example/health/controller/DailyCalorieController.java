@@ -1,8 +1,11 @@
 package org.example.health.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.example.health.common.ApiResult;
 import org.example.health.dto.DailyCalorieSummaryResp;
+import org.example.health.entity.BodyMetricRecord;
 import org.example.health.entity.SysUser;
+import org.example.health.mapper.BodyMetricRecordMapper;
 import org.example.health.mapper.DietRecordMapper;
 import org.example.health.mapper.SportRecordMapper;
 import org.example.health.mapper.SysUserMapper;
@@ -20,16 +23,18 @@ public class DailyCalorieController {
     private final DietRecordMapper dietRecordMapper;
     private final SportRecordMapper sportRecordMapper;
     private final SysUserMapper sysUserMapper;
+    private final BodyMetricRecordMapper bodyMetricRecordMapper;
 
     public DailyCalorieController(DietRecordMapper dietRecordMapper,
                                   SportRecordMapper sportRecordMapper,
-                                  SysUserMapper sysUserMapper) {
+                                  SysUserMapper sysUserMapper,
+                                  BodyMetricRecordMapper bodyMetricRecordMapper) {
         this.dietRecordMapper = dietRecordMapper;
         this.sportRecordMapper = sportRecordMapper;
         this.sysUserMapper = sysUserMapper;
+        this.bodyMetricRecordMapper = bodyMetricRecordMapper;
     }
 
-    // TODO：后续JWT从token取
     private Long getCurrentUserId(String authorization) {
         Long uid = JwtUtil.getUserIdFromHeader(authorization);
         if (uid == null) {
@@ -37,6 +42,7 @@ public class DailyCalorieController {
         }
         return uid;
     }
+
     @GetMapping("/summary")
     public ApiResult<DailyCalorieSummaryResp> summary(
             @RequestParam LocalDate date,
@@ -52,6 +58,23 @@ public class DailyCalorieController {
         BigDecimal net = intake.subtract(sport);
 
         SysUser user = sysUserMapper.selectById(userId);
+
+        // 关键改动：优先使用“该日期及之前最近一次身体指标记录”的体重
+        if (user != null) {
+            BodyMetricRecord latestMetric = bodyMetricRecordMapper.selectOne(
+                    new LambdaQueryWrapper<BodyMetricRecord>()
+                            .eq(BodyMetricRecord::getUserId, userId)
+                            .le(BodyMetricRecord::getRecordDate, date)
+                            .orderByDesc(BodyMetricRecord::getRecordDate)
+                            .orderByDesc(BodyMetricRecord::getId)
+                            .last("limit 1")
+            );
+
+            if (latestMetric != null && latestMetric.getWeightKg() != null) {
+                user.setWeight(latestMetric.getWeightKg());
+            }
+        }
+
         BigDecimal recommended = CalorieRecommendUtil.calcRecommended(user);
 
         DailyCalorieSummaryResp resp = new DailyCalorieSummaryResp();
