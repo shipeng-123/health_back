@@ -6,43 +6,61 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("sys_user")
 public class SysUser {
+
     private Long id;
+
     private String username;
+
     private String phone;
+
     private String password;
+
+    @TableField("role")
+    private Integer role; // 0普通用户 1管理员
+
     private String nickname;
+
     private Integer gender;
 
-    // 表字段 avatar_url，MP一般可自动映射，但我建议显式写，避免坑
     @TableField("avatar_url")
     private String avatarUrl;
 
     private String email;
 
-    // 你已经有
     private BigDecimal weight;
 
-    // ✅ 新增：身高 cm（表字段 height_cm）
     @TableField("height_cm")
     private BigDecimal heightCm;
 
-    // ✅ 新增：目标体重（可选）
     @TableField("goal_weight_kg")
     private BigDecimal goalWeightKg;
 
-    // ✅ 新增：活动水平 1低 2中 3高
     @TableField("activity_level")
     private Integer activityLevel;
 
-    // ✅ 新增：目标类型 1减脂 2增肌 3维持
     @TableField("target_type")
     private Integer targetType;
 
-    // ✅ 新增：出生日期
     @TableField("birth_date")
     private LocalDate birthDate;
+
+    @TableField("status")
+    private Integer status; // 1启用 0禁用
+
+    @TableField("deleted")
+    private Integer deleted; // 0未删除 1已删除
+
+    @TableField("last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @TableField("created_at")
+    private LocalDateTime createdAt;
+
+    @TableField("updated_at")
+    private LocalDateTime updatedAt;
 }
